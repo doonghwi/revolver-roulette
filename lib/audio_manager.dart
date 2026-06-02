@@ -12,7 +12,7 @@ class AudioManager {
   bool get muted => _sfx.muted;
   set muted(bool v) => _sfx.muted = v;
 
-  void spin() => _sfx.play('spin', 0.55); // quieter cylinder spin
+  void spin() => _sfx.play('spin', 0.35); // quieter cylinder spin
   void gunshot() => _sfx.play('gunshot', 1.0); // gunshot loudness boosted in the asset itself
   void cock() => _sfx.play('cock', 0.9);
   void click() => _sfx.play('click', 0.7);

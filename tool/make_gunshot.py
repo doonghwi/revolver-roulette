@@ -50,8 +50,8 @@ for d, g in [(0.03, 0.28), (0.06, 0.18), (0.1, 0.11), (0.16, 0.06)]:
     rev[k:k + len(y)] += lp(y, 2500) * g
 y = rev
 
-# loudness: light limiter (lift the body without raising the peak), then normalize
-y = np.tanh(y * 1.25)
+# loudness: stronger limiter (lift the body without raising the peak), then normalize
+y = np.tanh(y * 1.7)
 y = y / (np.max(np.abs(y)) + 1e-9) * 0.99
 out = os.path.join(here, 'assets', 'sounds', 'gunshot.wav')
 sf.write(out, y.astype(np.float32), sr)
