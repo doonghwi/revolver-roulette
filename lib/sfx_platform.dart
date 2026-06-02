@@ -8,7 +8,7 @@ export 'sfx_stub.dart'
 /// Logical sound name -> bundled asset path (shared by all implementations).
 const Map<String, String> kSfxAssets = {
   'spin': 'assets/sounds/cylinder_spin.wav',
-  'gunshot': 'assets/sounds/gunshot.mp3',
+  'gunshot': 'assets/sounds/gunshot.wav',
   'cock': 'assets/sounds/hammer_cock.wav',
   'click': 'assets/sounds/dry_click.wav',
 };

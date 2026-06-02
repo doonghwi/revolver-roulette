@@ -41,11 +41,15 @@ class RevolverPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final bw = _bx1 - _bx0, bh = _by1 - _by0;
-    final s = math.min(size.width / bw, size.height / bh) * 0.96;
+    // The gun is drawn horizontally then rotated 90° clockwise, so its on-screen
+    // footprint is bh wide x bw tall — fit against a portrait screen accordingly.
+    final s = math.min(size.width / bh, size.height / bw) * 0.96;
     final cx = (_bx0 + _bx1) / 2, cy = (_by0 + _by1) / 2;
     canvas.save();
-    canvas.translate(size.width / 2 - cx * s, size.height / 2 - cy * s);
+    canvas.translate(size.width / 2, size.height / 2);
+    canvas.rotate(math.pi / 2); // muzzle (+X) points DOWN -> bottom-right
     canvas.scale(s);
+    canvas.translate(-cx, -cy);
 
     _drawShadow(canvas);
     _drawGrip(canvas);

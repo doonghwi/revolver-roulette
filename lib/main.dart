@@ -4,10 +4,10 @@ import 'game_screen.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
-  // Landscape-first: lock to landscape orientations.
+  // Portrait: lock to portrait orientations.
   SystemChrome.setPreferredOrientations(const [
-    DeviceOrientation.landscapeLeft,
-    DeviceOrientation.landscapeRight,
+    DeviceOrientation.portraitUp,
+    DeviceOrientation.portraitDown,
   ]);
   SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
   runApp(const RevolverRouletteApp());
