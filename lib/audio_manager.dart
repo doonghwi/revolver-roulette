@@ -1,59 +1,77 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:audioplayers/audioplayers.dart';
 
-/// Sound effect manager. Pre-creates low-latency players so playback is instant.
-/// All assets are self-synthesized copyright-free WAVs (see tool/make_sounds.py).
+/// Sound effect manager.
+///
+/// Two web-specific pitfalls handled here:
+///  1) On web, `AssetSource` makes audioplayers route through its `AudioCache`,
+///     which calls `dart:io` and throws "Unsupported operation: _Namespace".
+///     We therefore use `UrlSource` on web (a direct `<audio src>` URL, which
+///     bypasses AudioCache) and keep `AssetSource` on mobile.
+///  2) Re-`play()`ing one AudioPlayer rapidly can "play once then go silent".
+///     We use a small pool of players per sound and round-robin them.
+///
+/// Playback is also kicked off synchronously inside the tap handler (no awaited
+/// stop() first) so the browser autoplay policy lets the AudioContext resume.
 class AudioManager {
-  AudioManager() {
-    for (final p in [_spin, _shot, _cock, _click]) {
-      p.setReleaseMode(ReleaseMode.stop);
-      p.setPlayerMode(PlayerMode.lowLatency);
-    }
-    // Warm up so the very first effect is not delayed.
-    _prime();
-  }
+  static const int _poolSize = 3;
 
-  final AudioPlayer _spin = AudioPlayer(playerId: 'spin');
-  final AudioPlayer _shot = AudioPlayer(playerId: 'shot');
-  final AudioPlayer _cock = AudioPlayer(playerId: 'cock');
-  final AudioPlayer _click = AudioPlayer(playerId: 'click');
+  // file names live in assets/sounds/ (mobile) and web/assets/assets/sounds/.
+  static const _spinFile = 'cylinder_spin.wav';
+  static const _shotFile = 'gunshot.mp3'; // mixkit real recording (CC0/Mixkit License)
+  static const _cockFile = 'hammer_cock.wav';
+  static const _clickFile = 'dry_click.wav';
+  static const _files = [_spinFile, _shotFile, _cockFile, _clickFile];
 
+  final Map<String, List<AudioPlayer>> _pool = {};
+  final Map<String, int> _next = {};
   bool muted = false;
 
-  Future<void> _prime() async {
-    try {
-      await _spin.setSource(AssetSource('sounds/cylinder_spin.wav'));
-      await _shot.setSource(AssetSource('sounds/gunshot.wav'));
-      await _cock.setSource(AssetSource('sounds/hammer_cock.wav'));
-      await _click.setSource(AssetSource('sounds/dry_click.wav'));
-    } catch (_) {/* best-effort */}
+  AudioManager() {
+    _init();
   }
 
-  Future<void> _play(AudioPlayer p, String asset, {double volume = 1.0}) async {
-    if (muted) return;
-    try {
-      await p.stop();
-      await p.play(AssetSource(asset), volume: volume);
-    } catch (_) {
-      // Audio is best-effort; never let a playback error break the game.
+  Future<void> _init() async {
+    for (final f in _files) {
+      final list = <AudioPlayer>[];
+      for (var i = 0; i < _poolSize; i++) {
+        final p = AudioPlayer();
+        await p.setReleaseMode(ReleaseMode.stop);
+        try {
+          await p.setSource(_source(f)); // pre-load
+        } catch (_) {/* best-effort */}
+        list.add(p);
+      }
+      _pool[f] = list;
+      _next[f] = 0;
     }
   }
 
-  /// Cylinder spinning / ratcheting — played on a safe (survived) pull.
-  Future<void> spin() => _play(_spin, 'sounds/cylinder_spin.wav', volume: 1.0);
+  Source _source(String file) => kIsWeb
+      ? UrlSource('assets/assets/sounds/$file')
+      : AssetSource('sounds/$file');
 
-  /// Gunshot — played when the live round fires.
-  Future<void> gunshot() => _play(_shot, 'sounds/gunshot.wav', volume: 1.0);
+  void _play(String file, double volume) {
+    if (muted) return;
+    final list = _pool[file];
+    if (list == null || list.isEmpty) return;
+    final i = _next[file]!;
+    _next[file] = (i + 1) % list.length;
+    // Fire inside the gesture frame; round-robin avoids the "plays once" issue.
+    list[i].play(_source(file), volume: volume).catchError((_) {});
+  }
 
-  /// Single-action hammer cock — played the instant the trigger is pressed.
-  Future<void> cock() => _play(_cock, 'sounds/hammer_cock.wav', volume: 0.9);
-
-  /// Light mechanism tick (reserved for subtle feedback).
-  Future<void> click() => _play(_click, 'sounds/dry_click.wav', volume: 0.7);
+  void spin() => _play(_spinFile, 1.0);
+  void gunshot() => _play(_shotFile, 1.0);
+  void cock() => _play(_cockFile, 0.9);
+  void click() => _play(_clickFile, 0.7);
 
   void dispose() {
-    _spin.dispose();
-    _shot.dispose();
-    _cock.dispose();
-    _click.dispose();
+    for (final list in _pool.values) {
+      for (final p in list) {
+        p.dispose();
+      }
+    }
+    _pool.clear();
   }
 }
