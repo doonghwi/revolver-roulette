@@ -10,8 +10,7 @@ void main() {
 
     // The horizontal shots-fired counter starts at 0.
     expect(find.text('0'), findsOneWidget);
-    // Tap indicator is visible in the ready phase.
-    expect(find.byIcon(Icons.touch_app), findsOneWidget);
+    expect(find.text('SHOTS FIRED · 쏜 횟수'), findsOneWidget);
   });
 
   testWidgets('Tapping pulls the trigger (counter or bang)', (tester) async {
