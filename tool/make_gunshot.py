@@ -42,16 +42,17 @@ y = 0.8 * x + 0.7 * boom + 0.55 * body + 1.6 * crack
 # 4) aggressive soft-clip for a loud, punchy, menacing blast
 y = np.tanh(y * 2.4)
 
-# 5) short dark reverb tail (a few decaying, low-passed echoes) for a big room
-rev = np.zeros(len(y) + int(sr * 0.4))
+# 5) short dark reverb tail (lighter, so the loud body dominates -> bigger bang)
+rev = np.zeros(len(y) + int(sr * 0.3))
 rev[:len(y)] = y
-for d, g in [(0.035, 0.5), (0.07, 0.34), (0.12, 0.22), (0.19, 0.13)]:
+for d, g in [(0.03, 0.28), (0.06, 0.18), (0.1, 0.11), (0.16, 0.06)]:
     k = int(d * sr)
     rev[k:k + len(y)] += lp(y, 2500) * g
 y = rev
 
-# normalize loud
-y = y / (np.max(np.abs(y)) + 1e-9) * 0.98
+# loudness: light limiter (lift the body without raising the peak), then normalize
+y = np.tanh(y * 1.25)
+y = y / (np.max(np.abs(y)) + 1e-9) * 0.99
 out = os.path.join(here, 'assets', 'sounds', 'gunshot.wav')
 sf.write(out, y.astype(np.float32), sr)
 print(f"wrote {out}  {len(y)/sr:.2f}s  peak={np.max(np.abs(y)):.2f}")
