@@ -129,9 +129,15 @@ class _GameScreenState extends State<GameScreen>
   @override
   Widget build(BuildContext context) {
     final flash = _flashCtrl.value;
-    // shake decays over the first ~40% of the flash animation
-    final shakeT = (1 - (flash / 0.4)).clamp(0.0, 1.0);
-    final shake = math.sin(flash * math.pi * 14) * 14 * shakeT;
+    // shake decays over the first ~35% of the flash animation
+    final shakeT = (1 - (flash / 0.35)).clamp(0.0, 1.0);
+    final shake = math.sin(flash * math.pi * 16) * 18 * shakeT;
+    // red flash: instant punch then fade out
+    final double redAlpha = flash <= 0
+        ? 0
+        : flash < 0.08
+            ? (flash / 0.08) * 0.9
+            : (0.9 * math.exp(-(flash - 0.08) * 3.2)).clamp(0.0, 0.9);
 
     return Scaffold(
       backgroundColor: const Color(0xFF140f0b),
@@ -166,12 +172,19 @@ class _GameScreenState extends State<GameScreen>
               ),
             ),
             // red flash overlay on a live round
-            if (flash > 0)
+            if (redAlpha > 0.01)
               Positioned.fill(
                 child: IgnorePointer(
-                  child: Container(
-                    color: Colors.red.withValues(
-                      alpha: (math.sin(flash * math.pi) * 0.7).clamp(0.0, 0.7),
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: RadialGradient(
+                        center: Alignment.center,
+                        radius: 1.1,
+                        colors: [
+                          const Color(0xFFff2a1a).withValues(alpha: redAlpha),
+                          const Color(0xFF8b0000).withValues(alpha: redAlpha),
+                        ],
+                      ),
                     ),
                   ),
                 ),
@@ -317,13 +330,17 @@ class _GameScreenState extends State<GameScreen>
   }
 
   Widget _deadOverlay(double flash) {
-    final t = (flash * 2).clamp(0.0, 1.0);
+    // pops in fast, holds, then fades out over the first ~0.6 of the anim
+    final double appear = (flash / 0.06).clamp(0.0, 1.0);
+    final double fade = (1 - (flash - 0.45) / 0.35).clamp(0.0, 1.0);
+    final double t = appear * fade;
+    if (t <= 0.01) return const SizedBox.shrink();
     return IgnorePointer(
       child: Center(
         child: Opacity(
           opacity: t,
           child: Transform.scale(
-            scale: 0.8 + t * 0.2,
+            scale: 0.7 + appear * 0.45,
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: const [
