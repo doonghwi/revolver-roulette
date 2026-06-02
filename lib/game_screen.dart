@@ -221,11 +221,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
           ),
           const Spacer(),
           _shotsCounter(),
-          IconButton(
-            onPressed: () => setState(() => _audio.muted = !_audio.muted),
-            icon: Icon(_audio.muted ? Icons.volume_off : Icons.volume_up,
-                color: const Color(0xFFb9a88f)),
-          ),
+          const SizedBox(width: 8),
         ],
       ),
     );
