@@ -1,0 +1,12 @@
+Sound assets
+============
+
+gunshot.mp3
+  "Game gun shot" by Mixkit — https://mixkit.co/free-sound-effects/gun/
+  License: Mixkit Free Sound Effects License (free for commercial use,
+  no attribution required; bundled as part of this app, not redistributed
+  standalone). https://mixkit.co/license/#sfxFree
+
+cylinder_spin.wav, hammer_cock.wav, dry_click.wav
+  Self-synthesized from scratch with numpy + scipy (procedural DSP).
+  See tool/make_sounds.py. No copyright — original generated audio.
