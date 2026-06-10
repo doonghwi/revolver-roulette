@@ -46,3 +46,4 @@ app.*.map.json
 
 # OMC orchestration state
 .omc/
+dist/
